@@ -1,0 +1,144 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{66e10239-f6bb-4d97-81de-ad164b3d96ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main File">
+      <UniqueIdentifier>{b422ff8b-0b03-4562-aded-c8be99a50b07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Audio Stuff">
+      <UniqueIdentifier>{259c7d9f-fc23-47b1-b5e6-c5698c46b1d8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Code\classes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\olcPixelGameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\stb_image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_audiosource.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_bassboostfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_biquadresonantfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_bus.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_c.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_dcremovalfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_echofilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_error.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_fader.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_fft.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_fftfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file_hack_off.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file_hack_on.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_filter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_flangerfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_freeverbfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_internal.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_lofifilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_misc.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_monotone.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_noise.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_openmpt.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_queue.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_robotizefilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_sfxr.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_speech.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_tedsid.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_thread.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_vic.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_vizsn.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_wav.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_waveshaperfilter.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_wavstream.h">
+      <Filter>Header Files\Audio Stuff</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Code\main.cpp">
+      <Filter>Main File</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

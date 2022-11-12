@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{66e10239-f6bb-4d97-81de-ad164b3d96ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Main File">
+      <UniqueIdentifier>{b422ff8b-0b03-4562-aded-c8be99a50b07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\audio">
+      <UniqueIdentifier>{a1603419-9654-4ee2-ad8a-26439f284386}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Code\classes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\functions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\olcPixelGameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\server.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\dr_flac.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\dr_mp3.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\dr_wav.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\stb_vorbis.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_audiosource.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_bus.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_error.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_fader.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_fft.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file_hack_off.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_file_hack_on.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_filter.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_internal.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_queue.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_thread.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_wav.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\soloud\soloud_wavstream.h">
+      <Filter>Header Files\audio</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Code\main.cpp">
+      <Filter>Main File</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\dr_impl.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_audiosource.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_bus.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_3d.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_basicops.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_faderops.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_filterops.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_getters.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_setters.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_voicegroup.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_core_voiceops.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_fader.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_fft.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_fft_lut.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_file.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_filter.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_queue.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_thread.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_wav.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_wavstream.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\stb_vorbis.c">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\soloud\soloud_misc.cpp">
+      <Filter>Header Files\audio</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

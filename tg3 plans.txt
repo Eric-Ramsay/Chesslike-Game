@@ -1,0 +1,35 @@
+Peasants - 			0
+Spearman - 			1
+Archer - 			2
+Heavy Infantry - 	1
+Cavalry Archer - 	2
+Light Cavalry - 	2
+Heavy Cavalry - 	3
+Berserk - 			3
+Fishing Ship - 		1
+Warship - 			2
+Trieme - 			2
+Skirmisher - 		2
+Mage - 				3
+
+Policies
+---------
+
+Houses provide 2x population
+Fish replenish 2x as quickly
+Spearmen +1 Attack
+No movement penalty on forests
+No movement penalty on hills
+Peasants, Spearmen, Fishing Boats have no upkeep
+No extra cost when building on forests
+Light Cavalry -1 cost
+
+Buildings
+----------
+Farm - 0
+House - 0
+Bridge - 1
+Pier - 2
+Workshop - 3
+Windmill - 3
+Fort - 2
