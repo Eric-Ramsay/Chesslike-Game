@@ -2655,7 +2655,7 @@ public:
 				if (players[P_TURN].turn == 0) {
 					if (c == 't') { //Assign Player Turn
 						std::cout << "My turn is now " << '0' + sender << std::endl;
-						players[P_TURN].turn = sender;
+						players[P_TURN].turn = (int)sender;
 					}
 					num++;
 				}
