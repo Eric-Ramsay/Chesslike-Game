@@ -372,6 +372,16 @@ public:
 					endTurn();
 				}
 			}
+			if (GetKey(olc::Key::N).bPressed) {
+				//sendData("n00");
+				//map = {};
+				//map.resize(MAPSIZE);
+				//drawMap = false;
+			}
+			if (GetKey(olc::Key::O).bPressed) {
+				//run_turn();
+				//endTurn();
+			}
 		}
 		//Movement and zooming
 		if (zoom < 16) {
@@ -2194,6 +2204,36 @@ public:
 			if (drawDot) { //Possible Unit Movement
 				DrawPartialDecal(olc::vf2d(dX, dY), flat, olc::vf2d(448, 16), olc::vf2d(16, 16), olc::vf2d(z, z), dotColor);
 			}
+			/*if (borders && map[y][x].owner != 0) { //DRAW COUNTRY BORDERS
+				olc::Pixel tint = colors[map[y][x].owner];
+				//colors[std::std::min(7, map[y][x].owner)];
+				bool lT, rT, uT, dT, bL, bR, tL, tR;
+				lT = map[y][safeC(x - 1)].owner != map[y][x].owner;
+				rT = map[y][safeC(x + 1)].owner != map[y][x].owner;
+				uT = map[safeC(y - 1)][x].owner != map[y][x].owner;
+				dT = map[safeC(y + 1)][x].owner != map[y][x].owner;
+				bL = map[safeC(y + 1)][safeC(x - 1)].owner != map[y][x].owner;
+				bR = map[safeC(y + 1)][safeC(x + 1)].owner != map[y][x].owner;
+				tL = map[safeC(y - 1)][safeC(x - 1)].owner != map[y][x].owner;
+				tR = map[safeC(y - 1)][safeC(x + 1)].owner != map[y][x].owner;
+				DrawPartialDecal(olc::vf2d(dX, dY), terrain, olc::vf2d((rT + 2 * lT + 4 * dT + 8 * uT) * 16, 64), olc::vf2d(16, 16), olc::vf2d(z, z), tint);
+				if (bL && !lT && !dT) {
+					DrawPartialDecal(olc::vf2d(dX, dY + (11 * (z))), terrain, olc::vf2d(256, 64 + 11),
+						olc::vf2d(3, 5), olc::vf2d(z, z), tint);
+				}
+				if (bR && !rT && !dT) {
+					DrawPartialDecal(olc::vf2d(dX + (13 * (z)), dY + (11 * (z))), terrain, olc::vf2d(272 + 13, 64 + 11),
+						olc::vf2d(3, 5), olc::vf2d(z, z), tint);
+				}
+				if (tL && !lT && !uT) {
+					DrawPartialDecal(olc::vf2d(dX, dY), terrain, olc::vf2d(288, 64),
+						olc::vf2d(3, 5), olc::vf2d(z, z), tint);
+				}
+				if (tR && !rT && !uT) {
+					DrawPartialDecal(olc::vf2d(dX + (13 * (z)), dY), terrain, olc::vf2d(304 + 13, 64),
+						olc::vf2d(3, 5), olc::vf2d(z, z), tint);
+				}
+			}*/
 			if (map[y][x].elev >= HILL) {
 				DrawElevation(x, y, dX, dY, z);
 			}
@@ -2493,7 +2533,7 @@ public:
 	}
 
 	std::string sendPolicies() {
-		std::string s = "p";
+		std::string s = "players[P_TURN]";
 		for (int i = 0; i < NUM_POLICIES; i++) {
 			s += '0' + players[P_TURN].policies[i];
 		}
