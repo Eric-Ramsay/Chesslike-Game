@@ -1,6 +1,4 @@
 #pragma once
-#include "constants.h"
-#include <deque> //used for faster river generation, and for pathfinding
 
 enum FORMAT {
 	LEFT, RIGHT, CENTER
@@ -302,7 +300,7 @@ struct Player {
 	int max_buildings = 12;
 	bool started = false; //Whether you get a free commander
 
-	bool policies[NUM_POLICIES] = { false };
+	std::vector<bool> policies = {};
 };
 
 struct UI_Player {

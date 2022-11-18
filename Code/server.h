@@ -1,7 +1,7 @@
 #pragma once
 #ifndef SERVER_H
 #define SERVER_H
-#include <iostream>
+#define WIN32_LEAN_AND_MEAN
 #include <WS2tcpip.h>
 #include <string>
 #include <sstream>

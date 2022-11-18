@@ -2,12 +2,20 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 #include "olcPixelGameEngine.h"
-#include <thread>
-
 int MAPSIZE = 200;
-float MODI = std::max(.2, (MAPSIZE) / (2000.0));
-const int NUM_POLICIES = 12;
 
+const int NUM_POLICIES = 14;
+std::vector<Player> players = {};
+
+//List of units, buildings, and policies
+std::vector<UI_Unit> units;
+std::vector<UI_Building> buildings;
+std::vector<Policy> policies;
+std::vector<int> UI_Units = {};
+int P_TURN;
+
+const int TEXT_W = 5;
+const int TEXT_H = 7;
 
 const olc::Pixel GREY(75, 75, 75);
 const olc::Pixel WHITE(229, 223, 210);
@@ -22,9 +30,6 @@ const olc::Pixel BROWN(139, 76, 45);
 const olc::Pixel PINK(237, 190, 190);
 const olc::Pixel BLACK(15, 18, 22);
 const olc::Pixel Cold_Desert(190, 140, 96);
-
-const int TEXT_W = 5;
-const int TEXT_H = 7;
 
 const olc::Pixel DARK_BROWN(50, 19, 0);
 const olc::Pixel LIGHT_BROWN(111, 63, 0);
@@ -55,5 +60,4 @@ const olc::Pixel Forest(34, 81, 41);
 
 const olc::Pixel Hill(104, 189, 44);
 const olc::Pixel Mountain(0, 0, 0);
-
 #endif

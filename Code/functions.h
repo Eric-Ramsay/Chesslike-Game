@@ -314,10 +314,17 @@ float fDist(int x1, int y1, int x2, int y2) {
 	return std::sqrt(xDist * xDist + yDist * yDist);
 }
 
+//determine whether a coordinate (ie mouse click) is within a rectangular region
+bool inBox(int x, int y, Box b) {
+	return (x >= b.x && y >= b.y && x <= b.x + b.w && y <= b.y + b.h);
+}
+
+//Computes f for A* pathfinding
 double f(Spot S) {
 	return S.g + S.h;
 }
 
+//pathfinding cost of travelling on a tile
 double tileCost(Tile t) {
 	double price = 1.0;
 	if (t.elev == WATER) {
@@ -335,10 +342,7 @@ double tileCost(Tile t) {
 	return price;
 }
 
-bool inBox(int x, int y, Box b) {
-	return (x >= b.x && y >= b.y && x <= b.x + b.w && y <= b.y + b.h);
-}
-
+//return a path between two tiles
 std::deque<Spot> pathfind(std::vector<std::vector<Tile>>& map, Spot start, Spot end, bool fly = false) {
 	std::deque<Spot> open;
 	std::deque<Spot> closed;
@@ -434,11 +438,7 @@ std::deque<Spot> pathfind(std::vector<std::vector<Tile>>& map, Spot start, Spot 
 	return {};
 }
 
-int path_length(std::vector<std::vector<Tile>>& map, int startX, int startY, int endX, int endY) {
-
-	return 1;
-}
-
+//Find the manhattan distance between two numbers, accounting for map wrap
 int coord_dist(int a, int b) {
 	int d = std::abs(a - b);
 	if (d > MAPSIZE / 2) {
@@ -447,7 +447,7 @@ int coord_dist(int a, int b) {
 	return d;
 }
 
-
+//Turn the map into one type of tiles
 std::vector<std::vector<Tile>> clearMap(Tile t) {
 	std::vector<std::vector<Tile>> map;
 	map.resize(MAPSIZE);
@@ -462,6 +462,7 @@ std::vector<std::vector<Tile>> clearMap(Tile t) {
 	return map;
 }
 
+//Find the distance between two coordinates
 float c_dist(C a, C b) {
 	float x_dist = coord_dist(a.x, b.x);
 	float y_dist = coord_dist(a.y, b.y);
@@ -470,7 +471,7 @@ float c_dist(C a, C b) {
 	return sqrt(x_dist + y_dist);
 }
 
-
+//Check if a tile is lower than another, taking map wrap into account
 bool c_less(int a, int b) {
 	int d = std::abs(a - b); //coord less
 
@@ -487,20 +488,91 @@ bool c_less(int a, int b) {
 	}
 }
 
+//Converts a spot type to a coordinate type
 C stoc(Spot s) {
 	return C(s.x, s.y);
 }
 
-//SHALLOW, OCEAN, RIVER, LAKE, GRASS, STEPPE, SAVANNA, MEADOW, DESERT, TUNDRA, ICE, BOG
+//Returns the x position of a terrain sprite
 int sourceX(TERRAIN type) {
 	int sX[COLD_DESERT + 1] = { 352, 160, 224, 192, 96, 64, 128, 320, 32, 0, 256, 288, 384 };
 	return sX[type];
 	return 0;
 }
 
-//NONE, TEMPERATE, JUNGLE, TAIGA, GLADE
+//Returns the x positon of a forest sprite
 int forestX(FOREST type) {
 	int sX[GLADE + 1] = { 224, 0, 16, 32, 48 };
 	return sX[type];
 }
+
+//Given a building's tile index, find its index in the building list
+//This is done because some buildings, ie growing farms, have multiple tile indexes but only one building index
+int bIndex(char t) {
+	int type = (int)t;
+	int ret = 0;
+
+	for (int i = 0; i < buildings.size(); i++) {
+		if (type >= buildings[i].type && type <= buildings[i].max_type) {
+			return i;
+		}
+	}
+
+	return 0;
+}
+
+//Return a units' stats
+int getATK(int type, int owner) {
+	int val = units[type - 1].ATK;
+	if (players[owner].policies[HARDY]) {
+		if (type == PEASANT || type == FISHING_RAFT) {
+			return 2;
+		}
+	}
+	return val;
+}
+int getMaxMP(int type, int owner) {
+	int val = units[type - 1].MP;
+	if (players[owner].policies[HUSBANDRY]) {
+		if (type >= LIGHT_CAVALRY && type <= COMMANDER) {
+			return val + 1;
+		}
+	}
+	if (players[owner].policies[DONKEYS]) {
+		if (type == MERCHANT) {
+			return val + 1;
+		}
+	}
+	return val;
+}
+int getMaxHP(int type, int owner) {
+	int val = units[type - 1].HP;
+	if (players[owner].policies[HARDY]) {
+		if (type == PEASANT || type == FISHING_RAFT) {
+			return 8;
+		}
+	}
+	if (players[owner].policies[DONKEYS]) {
+		return val + 2;
+	}
+	return val;
+}
+
+//Return buildings' max HP
+int getBuildingHP(char t, int owner) {
+	int type = bIndex(t);
+	int val = buildings[type].HP;
+	if (players[owner].policies[FORTIFICATIONS]) {
+		return val + 3;
+	}
+	return val;
+}
+
+//initialize player policies
+void initPlayerPolicies(Player& p) {
+	for (int i = 0; i < NUM_POLICIES; i++) {
+		p.policies.push_back(false);
+	}
+}
+
 

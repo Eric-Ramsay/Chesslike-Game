@@ -2,30 +2,27 @@
 #define NOMINMAX
 #define MINIAUDIO_IMPLEMENTATION
 
-#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+//#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 #include <algorithm>
-namespace Gdiplus
-{
-	using std::min;
-	using std::max;
-};
-
-#include "server.h"
-#include "constants.h"
-#include "classes.h"
-#include "functions.h"
-
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <vector>
+#include <deque>
+#include <iostream>
+using namespace std;
+
+#include "server.h"
+#include "classes.h"
+#include "constants.h"
+#include "functions.h"
 
 #include "miniaudio.h"
 
 
 //SERVER SETTINGS -------------------------------------
 bool connected = true;
-std::string IP = "70.136.29.184";
-//std::string IP = "192.168.1.140";
+std::string IP = "";
 int port = 1234;
 SOCKET sock;
 //-----------------------------------------------------
@@ -67,8 +64,7 @@ private:
 	olc::Decal* building_sprites;
 
 	 
-	//------------------------------------------------------
-
+	//Audio Management -------------------------------------
 	enum SFX {
 		BOW_DRAW, BOW_FIRE, KILL, ATTACK, BUILD, UNIT_PLACE, CHIMES, FISH_SPLASH, MARCH, FOREST_BUILD, SHIP_MOVE, FIREBALL, CLINK, BUILDING_HIT, BUILDING_DESTROY
 	};
@@ -117,14 +113,8 @@ private:
 	void playSound(SFX s) {
 		ma_engine_play_sound(&audio, sfx[s], NULL);
 	}
+	//End of Audio Management ------------------------------
 
-	//I should probably have a function to play audio, that way i can keep stuff clean
-	
-	//-------------------
-	
-	//PLAYER
-	Player p;
-	std::vector<Player> players = {};
 
 	//Map Making Variables
 	bool MM_active = false;
@@ -149,12 +139,6 @@ private:
 	bool buying_unit = false;
 	bool buying_building = false;
 
-	//List of units, buildings, and policies
-	std::vector<UI_Unit> units;
-	std::vector<UI_Building> buildings;
-	std::vector<Policy> policies;
-	std::vector<int> UI_Units = {};
-
 	//General UI variables
 	bool unit_UI = 0;
 	bool building_UI = false;
@@ -172,10 +156,6 @@ private:
 	int zoom = 32;
 	bool playMusic = true;
 
-	//Encyclopedia variables
-	bool draw_encyclopedia = false;
-	std::vector<Entry> encyclopedia = {};
-
 	//UI bounding boxes, so that player doesnt accidentally click behind UI 
 	Box unit_bounds = Box(2, 4 + 15 * 3, 79 * 3, 129 * 3);
 	Box building_bounds = Box(2, 6 + 144 * 3, 105 * 3, 34 * 3);
@@ -188,8 +168,8 @@ private:
 
 
 public:
-
-	bool OnUserCreate() override { //Runs once when game starts	
+	//Runs once when game starts	
+	bool OnUserCreate() override { 
 		srand(time(NULL));
 
 		//Initialize Sprites and Decals
@@ -216,6 +196,7 @@ public:
 
 		for (int i = 0; i < 9; i++) {
 			players.push_back(Player());
+			initPlayerPolicies(players[i]);
 		}
 
 		return true;
@@ -240,9 +221,10 @@ public:
 			if (timer == 500) {
 				timer = 0;
 			}
+			//Camera Controls
 			if (!GetKey(olc::Key::SHIFT).bHeld) {
 				if (GetKey(olc::Key::LEFT).bHeld || GetKey(olc::Key::A).bHeld) { //Pan Left
-					dXView -= zoom/8;
+					dXView -= zoom / 8;
 					if (zoom < 16) {
 						xView = safeC(xView - 1);
 					}
@@ -275,15 +257,16 @@ public:
 						zoom++;
 					}
 				}
-			}
-			if (GetMouseWheel() < 0) {
-				if (zoom >= ((ScreenHeight() / MAPSIZE)) && zoom >= 2) {
-					zoom--;
+				//Zoom in and Out
+				if (GetMouseWheel() < 0) {
+					if (zoom >= ((ScreenHeight() / MAPSIZE)) && zoom >= 2) {
+						zoom--;
+					}
 				}
-			}
-			else if (GetMouseWheel() > 0) {
-				if (zoom <= 63) {
-					zoom++;
+				else if (GetMouseWheel() > 0) {
+					if (zoom <= 63) {
+						zoom++;
+					}
 				}
 			}
 			handleAudio();
@@ -294,7 +277,7 @@ public:
 		//Below are the Keyboard Press detections and what not
 		//Map Maker Controls---------------------------------------------------------------------------------------------------------------------------------Map Maker Controls Start---
 		if (GetKey(olc::Key::CTRL).bHeld && GetKey(olc::Key::SHIFT).bHeld && GetKey(olc::Key::M).bReleased) {
-			//MM_active = !MM_active;
+			MM_active = !MM_active;
 		}
 		if (GetKey(olc::Key::M).bPressed) {
 			playMusic = !playMusic;
@@ -385,7 +368,7 @@ public:
 					sendData("E00");
 				}
 				else {
-					sendData("G" + to_str(p.gold));
+					sendData("G" + to_str(players[P_TURN].gold));
 					endTurn();
 				}
 			}
@@ -406,23 +389,19 @@ public:
 			dYView = 0;
 		}
 		//subsprite zoom stuff
-		if (dYView >= zoom || zoom < 16)
-		{
+		if (dYView >= zoom || zoom < 16) {
 			dYView = safeC(dYView, zoom);
 			yView = safeC(yView + 1);
 		}
-		if (dYView < 0 || zoom < 16)
-		{
+		if (dYView < 0 || zoom < 16) {
 			dYView = zoom + dYView;
 			yView = safeC(yView - 1);
 		}
-		if (dXView >= zoom || zoom < 16)
-		{
+		if (dXView >= zoom || zoom < 16) {
 			dXView = safeC(dXView, zoom);
 			xView = safeC(xView + 1);
 		}
-		if (dXView < 0 || zoom < 16)
-		{
+		if (dXView < 0 || zoom < 16) {
 			dXView = zoom + dXView;
 			xView = safeC(xView - 1);
 		}
@@ -432,6 +411,7 @@ public:
 		int y = GetMouseY();
 		bool UI_Click = (makeCiv > -1);
 
+		//If the player is still creating their civilization's policies and units
 		if (drawMap && makeCiv == -1) {
 			if (inBox(x, y, building_sel_bounds)) {
 				UI_Click = true;
@@ -475,7 +455,7 @@ public:
 			if (inBox(x, y, end_turn)) {
 				UI_Click = true;
 				if (GetMouse(0).bPressed) {
-					sendData("G" + to_str(p.gold));
+					sendData("G" + to_str(players[P_TURN].gold));
 					endTurn();
 				}
 			}
@@ -489,6 +469,7 @@ public:
 			UI_Click = UI_Click || inBox(x, y, gold_bounds);
 			UI_Click = UI_Click || inBox(x, y, pop_bounds);
 
+			//The player didn't click on a UI element, check if they're clicking on a unit
 			if (!UI_Click) {
 				tH.x = safeC(xView + floor((GetMouseX() + dXView - ScreenWidth() / 2) / (float)zoom));
 				tH.y = safeC(yView + floor((GetMouseY() + dYView - ScreenHeight() / 2) / (float)zoom));
@@ -498,7 +479,7 @@ public:
 						dragging_unit = false;
 					}
 					else if (GetMouse(0).bReleased) {
-						if (turn == p.turn && map[drag.y][drag.x].unit.owner == p.turn) {
+						if (turn == players[P_TURN].turn && map[drag.y][drag.x].unit.owner == players[P_TURN].turn) {
 							//Check if unit can be moved there
 							float cost = moveCost(Spot(drag.x, drag.y), Spot(tH.x, tH.y), getMaxMP(map[drag.y][drag.x].unit.type, map[drag.y][drag.x].unit.owner), map[drag.y][drag.x].unit);
 							if (map[tH.y][tH.x].unit.type == NO_UNIT && cost <= map[drag.y][drag.x].unit.MP) {
@@ -513,10 +494,10 @@ public:
 								else {
 									playSound(MARCH);
 								}
-								for (int i = 0; i < p.units.size(); i++) {
-									if (p.units[i].y == drag.y) {
-										if (p.units[i].x == drag.x) {
-											p.units[i] = tH;
+								for (int i = 0; i < players[P_TURN].units.size(); i++) {
+									if (players[P_TURN].units[i].y == drag.y) {
+										if (players[P_TURN].units[i].x == drag.x) {
+											players[P_TURN].units[i] = tH;
 										}
 									}
 								}
@@ -532,7 +513,7 @@ public:
 					}
 					else if (!GetMouse(0).bHeld) { 
 						//This code handles building placement
-						if (turn == p.turn && canBuyBuilding(tH.x, tH.y, building_selected)) {
+						if (turn == players[P_TURN].turn && canBuyBuilding(tH.x, tH.y, building_selected)) {
 							//The canBuyBuilding function confirms we're able to place the building here.
 							map[tH.y][tH.x].building = buildings[building_selected].type;
 							if (map[tH.y][tH.x].building == 8) { //Canals arent actually buildings
@@ -553,15 +534,15 @@ public:
 								sendData(sendTile(tH.x, tH.y));
 							}
 							else { //Store the building in the player's list of buildings
-								p.buildings.push_back(tH);
-								map[tH.y][tH.x].owner = p.turn;
+								players[P_TURN].buildings.push_back(tH);
+								map[tH.y][tH.x].owner = players[P_TURN].turn;
 								map[tH.y][tH.x].HP = buildings[building_selected].HP; //Give the building its HP
 							}
-							p.gold -= buildings[building_selected].cost; //Pay the building price
+							players[P_TURN].gold -= buildings[building_selected].cost; //Pay the building price
 							map[tH.y][tH.x].forest = NONE;
 							if (map[tH.y][tH.x].forest > FISH) { //build over a forest
-								if (!p.policies[LOGGING]) {
-									p.gold -= 2;
+								if (!players[P_TURN].policies[LOGGING]) {
+									players[P_TURN].gold -= 2;
 								}
 								playSound(FOREST_BUILD);
 							}
@@ -578,25 +559,25 @@ public:
 						buying_unit = false;
 					}
 					else if (!GetMouse(0).bHeld) {
-						if (turn == p.turn && canBuy(tH.x, tH.y, unit_selected)) {
+						if (turn == players[P_TURN].turn && canBuy(tH.x, tH.y, unit_selected)) {
 							int placeholder = unit_selected;
-							if (p.started) {
-								p.gold -= units[unit_selected].cost;
+							if (players[P_TURN].started) {
+								players[P_TURN].gold -= units[unit_selected].cost;
 							}
 							else {
 								unit_selected = MAYOR-1;
-								p.started = true;
+								players[P_TURN].started = true;
 								if (map[tH.y][tH.x].elev < FLAT) {
 									map[tH.y][tH.x].elev = FLAT;
 									map[tH.y][tH.x].type = GRASS;
 									sendData(sendTile(tH.x, tH.y));
 								}
 							}
-							p.units.push_back(tH);
-							map[tH.y][tH.x].owner = p.turn;
+							players[P_TURN].units.push_back(tH);
+							map[tH.y][tH.x].owner = players[P_TURN].turn;
 							map[tH.y][tH.x].unit.type = unit_selected + 1;
-							map[tH.y][tH.x].unit.owner = p.turn;
-							map[tH.y][tH.x].unit.HP = getMaxHP(unit_selected+1, p.turn);
+							map[tH.y][tH.x].unit.owner = players[P_TURN].turn;
+							map[tH.y][tH.x].unit.HP = getMaxHP(unit_selected+1, players[P_TURN].turn);
 							map[tH.y][tH.x].unit.MP = 0;
 							unit_selected = placeholder;
 							sendData("u" + sendUnit(tH.x, tH.y));
@@ -616,11 +597,11 @@ public:
 						//Preliminary checks to being able to perform a right click function with a unit - 
 						//It must be your turn, and you must have selected a unit which still has movement left
 						//And your target must be in that unit's range
-						if (turn == p.turn && map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.MP > 0 && map[tS.y][tS.x].unit.owner == p.turn) {
+						if (turn == players[P_TURN].turn && map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.MP > 0 && map[tS.y][tS.x].unit.owner == players[P_TURN].turn) {
 							if (x_dist <= units[map[tS.y][tS.x].unit.type - 1].range && y_dist <= units[map[tS.y][tS.x].unit.type - 1].range) {
 								//Attack an enemy unit
 								//Mangonels can't attack units
-								if (map[tS.y][tS.x].unit.type != MANGONEL && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.owner != p.turn) {
+								if (map[tS.y][tS.x].unit.type != MANGONEL && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.owner != players[P_TURN].turn) {
 									map[tH.y][tH.x].unit.HP -= getATK(map[tS.y][tS.x].unit.type, map[tS.y][tS.x].unit.owner);
 									//If the enemy is in range as well, then it will defend itself
 									if (x_dist <= units[map[tH.y][tH.x].unit.type - 1].range && y_dist <= units[map[tH.y][tH.x].unit.type - 1].range) {
@@ -648,18 +629,18 @@ public:
 									if (map[tS.y][tS.x].unit.HP <= 0) {
 										map[tS.y][tS.x].unit = Unit();
 										std::vector<C> units = {};
-										for (int i = 0; i < p.units.size(); i++) { //Delete the unit from your unit list
+										for (int i = 0; i < players[P_TURN].units.size(); i++) { //Delete the unit from your unit list
 											bool found = false;
-											if (p.units[i].y == tS.y) {
-												if (p.units[i].x == tS.x) {
+											if (players[P_TURN].units[i].y == tS.y) {
+												if (players[P_TURN].units[i].x == tS.x) {
 													found = true;
 												}
 											}
 											if (!found) {
-												units.push_back(p.units[i]);
+												units.push_back(players[P_TURN].units[i]);
 											}
 										}
-										p.units = units;
+										players[P_TURN].units = units;
 									}
 									//Choose what sound effect to play, based on unit range
 									if (units[map[tS.y][tS.x].unit.type - 1].range > 1) {
@@ -675,7 +656,7 @@ public:
 										//If the slain enemy is a peasant or fishing ship, earn a gold (except if they have forced levy)
 										if (map[tH.y][tH.x].unit.type == PEASANT || map[tH.y][tH.x].unit.type == FISHING_RAFT) {
 											if (!players[map[tH.y][tH.x].owner].policies[LEVY]) {
-												p.gold++;
+												players[P_TURN].gold++;
 											}
 										}
 										map[tH.y][tH.x].unit = Unit();
@@ -694,8 +675,8 @@ public:
 										//check if you're in range
 
 										if (map[tS.y][tS.x].unit.MP > 0 && x_dist <= units[map[tS.y][tS.x].unit.type - 1].range && y_dist <= units[map[tS.y][tS.x].unit.type - 1].range) {
-											if (map[tS.y][tS.x].unit.owner == p.turn) {
-												p.gold++;
+											if (map[tS.y][tS.x].unit.owner == players[P_TURN].turn) {
+												players[P_TURN].gold++;
 												map[tH.y][tH.x].harvest = harvest + 1;
 												map[tS.y][tS.x].unit.MP = 0;
 												sendData("u" + sendUnit(tH.x, tH.y) + sendUnit(tS.x, tS.y));
@@ -705,7 +686,7 @@ public:
 									}
 								}
 								//Damage a building with your unit, ie attack a building
-								else if (map[tH.y][tH.x].building > 0 && map[tH.y][tH.x].owner != p.turn) { //raid building
+								else if (map[tH.y][tH.x].building > 0 && map[tH.y][tH.x].owner != players[P_TURN].turn) { //raid building
 									int x_dist = coord_dist(tH.x, tS.x);
 									int y_dist = coord_dist(tH.y, tS.y);
 
@@ -714,7 +695,7 @@ public:
 										for (int i = -1; i < 2; i++) {
 											for (int j = -1; j < 2; j++) {
 												if (i != 0 || j != 0) { //check for adjacent enemy forts
-													if (map[safeC(tH.y + i)][safeC(tH.x + j)].owner != p.turn && bIndex(map[safeC(tH.y + i)][safeC(tH.x + j)].building) == FORT) {
+													if (map[safeC(tH.y + i)][safeC(tH.x + j)].owner != players[P_TURN].turn && bIndex(map[safeC(tH.y + i)][safeC(tH.x + j)].building) == FORT) {
 														proceed = false;
 														i = 2; j = 2;
 													}
@@ -723,7 +704,7 @@ public:
 										}
 										if (bIndex(map[tH.y][tH.x].building) == FORT || proceed) {
 											//Damage the building
-											int dmg = getATK(map[tS.y][tS.x].unit.type, p.turn);
+											int dmg = getATK(map[tS.y][tS.x].unit.type, players[P_TURN].turn);
 											//ranged units do less dmg to buildings
 											if (units[map[tS.y][tS.x].unit.type - 1].range > 1) {
 												dmg = 2;
@@ -761,12 +742,12 @@ public:
 					crown.x = x - 5 * 3.0;
 					crown.y = y;
 					if (!GetMouse(0).bHeld) { //Promote Unit to Commander
-						if (turn == p.turn && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.type != COMMANDER && map[tH.y][tH.x].unit.owner == p.turn) {
+						if (turn == players[P_TURN].turn && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.type != COMMANDER && map[tH.y][tH.x].unit.owner == players[P_TURN].turn) {
 							if (!units[map[tH.y][tH.x].unit.type - 1].naval) {
-								if (p.gold >= (16 - units[map[tH.y][tH.x].unit.type - 1].cost)) {
-									p.gold -= (16 - units[map[tH.y][tH.x].unit.type - 1].cost);
+								if (players[P_TURN].gold >= (16 - units[map[tH.y][tH.x].unit.type - 1].cost)) {
+									players[P_TURN].gold -= (16 - units[map[tH.y][tH.x].unit.type - 1].cost);
 									map[tH.y][tH.x].unit.type = COMMANDER;
-									map[tH.y][tH.x].unit.HP = min(map[tH.y][tH.x].unit.HP + 10, getMaxHP(COMMANDER, p.turn));
+									map[tH.y][tH.x].unit.HP = min(map[tH.y][tH.x].unit.HP + 10, getMaxHP(COMMANDER, players[P_TURN].turn));
 									map[tH.y][tH.x].unit.MP = 0;
 									sendData("u" + sendUnit(tH.x, tH.y));
 								}
@@ -779,9 +760,9 @@ public:
 					heal.x = x - 5 * 2.0;
 					heal.y = y;
 					if (!GetMouse(0).bHeld) { //Heal unit
-						if (turn == p.turn && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.owner == p.turn) {
+						if (turn == players[P_TURN].turn && map[tH.y][tH.x].unit.type > 0 && map[tH.y][tH.x].unit.owner == players[P_TURN].turn) {
 							playSound(CLINK);
-							map[tH.y][tH.x].unit.HP = min(map[tH.y][tH.x].unit.HP + 5, getMaxHP(map[tH.y][tH.x].unit.type, p.turn));
+							map[tH.y][tH.x].unit.HP = min(map[tH.y][tH.x].unit.HP + 5, getMaxHP(map[tH.y][tH.x].unit.type, players[P_TURN].turn));
 							sendData("u" + sendUnit(tH.x, tH.y));
 							can_heal = false;
 						}
@@ -816,7 +797,7 @@ public:
 					if (!UI_Click) {
 						tS = tH;
 					}
-					if (turn == p.turn && map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.MP > 0) {
+					if (turn == players[P_TURN].turn && map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.MP > 0) {
 						attacking_unit = true;
 						if (units[map[tS.y][tS.x].unit.type - 1].range > 1 && map[tS.y][tS.x].unit.type != MAGE) {
 							playSound(BOW_DRAW);
@@ -841,7 +822,7 @@ public:
 			DrawDrag();
 			if (makeCiv > -1) {
 				Draw(icons, ScreenWidth() - (2 + 16 * 2), ScreenHeight() - (2 + 16 * 2), 0, 80, 16, 16, 2, colors[turn]);
-				if (turn == p.turn) {
+				if (turn == players[P_TURN].turn) {
 					olc::Pixel drawColor = olc::WHITE;
 					Draw(icons, ScreenWidth() - (2 + 16 * 2), ScreenHeight() - (2 + 16 * 2), 16, 80, 16, 16, 2, drawColor);
 				}
@@ -913,10 +894,10 @@ public:
 
 						for (int i = 0; i < policies.size(); i++) {
 							if (i < NUM_POLICIES) {
-								p.policies[i] = policies[i].active;
+								players[P_TURN].policies[i] = policies[i].active;
 							}
 						}
-						players[p.turn] = p;
+						players[players[P_TURN].turn] = players[P_TURN];
 						sendData(sendPolicies()); //Send Policies to the server
 					}
 				}
@@ -972,11 +953,11 @@ public:
 					Draw(icons, dX, dY, 19, 50, 58, 17, scale * 2);
 					UI_Unit u = units[hovered];
 					Print(to_str(u.cost), dX + 17 * 2*scale - 1, dY + 5 * 2*scale, true, 2*scale); //Cost					
-					Print(to_str(getMaxHP(hovered+1, p.turn)), dX + 17 * 2*scale - 1, dY + 13 * 2*scale, true, 2*scale); //HP		
-					Print(to_str(getATK(hovered+1, p.turn)), dX + 34 * 2*scale, dY + 1 * 2*scale, false, 2 * scale); //ATK
+					Print(to_str(getMaxHP(hovered+1, players[P_TURN].turn)), dX + 17 * 2*scale - 1, dY + 13 * 2*scale, true, 2*scale); //HP		
+					Print(to_str(getATK(hovered+1, players[P_TURN].turn)), dX + 34 * 2*scale, dY + 1 * 2*scale, false, 2 * scale); //ATK
 					Print(to_str(u.DEF), dX + 34 * 2*scale, dY + 9 * 2*scale, false, 2*scale); //DEF
 					Print(to_str(u.range), dX + 51 * 2*scale, dY + 1 * 2*scale, false, 2*scale); //RANGE
-					Print(to_str(getMaxMP(hovered+1, p.turn)), dX + 51 * 2*scale, dY + 9 * 2*scale, false, 2*scale); //MP
+					Print(to_str(getMaxMP(hovered+1, players[P_TURN].turn)), dX + 51 * 2*scale, dY + 9 * 2*scale, false, 2*scale); //MP
 				}
 				else if (makeCiv == 0) { //policies
 					//Policies
@@ -1034,9 +1015,9 @@ public:
 			else {
 				DrawUI();
 			}
-			if (p.units.size() == 0 && p.started) {
+			if (players[P_TURN].units.size() == 0 && players[P_TURN].started) {
 				Print("You have been defeated!", ScreenWidth() / 2, ScreenHeight() / 2, true, 3);
-				if (turn == p.turn) {
+				if (turn == players[P_TURN].turn) {
 					endTurn();
 				}
 			}
@@ -1062,18 +1043,18 @@ public:
 				bool old_stuff = false;
 				for (int i = 0; i < map.size(); i++) {
 					for (int j = 0; j < map.size(); j++) {
-						if (map[i][j].unit.type > 0 && map[i][j].unit.owner == p.turn) {
-							p.units.push_back(C(j, i));
+						if (map[i][j].unit.type > 0 && map[i][j].unit.owner == players[P_TURN].turn) {
+							players[P_TURN].units.push_back(C(j, i));
 							old_stuff = true;
 						}
-						if (map[i][j].building > 0 && map[i][j].owner == p.turn) {
-							p.buildings.push_back(C(j, i));
+						if (map[i][j].building > 0 && map[i][j].owner == players[P_TURN].turn) {
+							players[P_TURN].buildings.push_back(C(j, i));
 							old_stuff = true;
 						}
 					}
 				}
 				if (old_stuff) {
-					p.started = true;
+					players[P_TURN].started = true;
 					sendData("g");
 				}
 			}
@@ -1083,9 +1064,9 @@ public:
 			int dY = ScreenHeight() / 2;
 			Print("Loading Map", dX, dY, true, 2.0);
 			
-			DrawBuilding(6, dX-80, dY+32, 2, 99, C(10, 73), p.turn);
-			DrawBuilding(9, dX-16, dY+32, 2, 99, C(31, 5), p.turn);
-			DrawBuilding(6, dX+48, dY+32, 2, 99, C(105, 73), p.turn);
+			DrawBuilding(6, dX-80, dY+32, 2, 99, C(10, 73), players[P_TURN].turn);
+			DrawBuilding(9, dX-16, dY+32, 2, 99, C(31, 5), players[P_TURN].turn);
+			DrawBuilding(6, dX+48, dY+32, 2, 99, C(105, 73), players[P_TURN].turn);
 		}
 		SetDrawTarget(nullptr);
 		return true;
@@ -1105,84 +1086,39 @@ public:
 		return 0;
 	}
 
-	//Stats
-	int getATK(int type, int owner) {
-		int ape = units[type - 1].ATK;
-		if (players[owner].policies[HARDY]) {
-			if (type == PEASANT || type == FISHING_RAFT) {
-				return 2;
-			}
-		}
-		return ape;
-	}
-	int getMaxMP(int type, int owner) {
-		int ape = units[type - 1].MP;
-		if (players[owner].policies[HUSBANDRY]) {
-			if (type >= LIGHT_CAVALRY && type <= COMMANDER) {
-				return ape + 1;
-			}
-		}
-		if (players[owner].policies[DONKEYS]) {
-			if (type == MERCHANT) {
-				return ape + 1;
-			}
-		}
-		return ape;
-	}
-	int getMaxHP(int type, int owner) {
-		int ape = units[type - 1].HP;
-		if (players[owner].policies[HARDY]) {
-			if (type == PEASANT || type == FISHING_RAFT) {
-				return 8;
-			}
-		}
-		if (players[owner].policies[DONKEYS]) {
-			return ape + 2;
-		}
-		return ape;
-	}
-	int getBuildingHP(char t, int owner) {
-		int type = bIndex(t);
-		int ape = buildings[type].HP;
-		if (players[owner].policies[FORTIFICATIONS]) {
-			return ape + 3;
-		}
-		return ape;
-	}
 
 
 	//Whenever the server says that this player's turn is starting, run this function
 	void startTurn() {
 		int bType;
 		bool delta = false;
-		encyclopedia = {};
 		harvest++; // This enables fish to be harvested again
-		if (p.units.size() > 0) {
-			p.gold++;
+		if (players[P_TURN].units.size() > 0) {
+			players[P_TURN].gold++;
 		}
-		else if (p.started) {
+		else if (players[P_TURN].started) {
 			endTurn();
 			return;
 		}
-		if (p.policies[MEDICINE]) {
+		if (players[P_TURN].policies[MEDICINE]) {
 			can_heal = true;
 		}
 		std::vector<C> unit_list = {};
 		std::vector<C> building_list = {};
 		std::string s = "u";
-		p.upkeep = 0;
-		for (int i = p.units.size()-1; i >= 0; i--) {
-			C c = p.units[i];
+		players[P_TURN].upkeep = 0;
+		for (int i = players[P_TURN].units.size()-1; i >= 0; i--) {
+			C c = players[P_TURN].units[i];
 			bType = -1;
 			if (map[c.y][c.x].building > 0) {
 				bType = bIndex(map[c.y][c.x].building);
 			}
-			if (map[c.y][c.x].unit.owner == p.turn && map[c.y][c.x].unit.type > 0) {
+			if (map[c.y][c.x].unit.owner == players[P_TURN].turn && map[c.y][c.x].unit.type > 0) {
 				unit_list.push_back(c);
 				if (map[c.y][c.x].unit.type != MAYOR) { //mayors dont pay upkeep costs
-					if (!p.policies[LEVY] || (map[c.y][c.x].unit.type != PEASANT && map[c.y][c.x].unit.type != SPEARMAN && map[c.y][c.x].unit.type != FISHING_RAFT && map[c.y][c.x].unit.type != PIKEMAN)) { //levy means no upkeep on fish, peasants, and spears
-						if (!p.policies[BARRACKS] || (bType == FORT || bType == PIER)) { //barracks means forts and piers provide upkeep for unit on that tile
-							p.upkeep += units[map[c.y][c.x].unit.type - 1].cost * .05;
+					if (!players[P_TURN].policies[LEVY] || (map[c.y][c.x].unit.type != PEASANT && map[c.y][c.x].unit.type != SPEARMAN && map[c.y][c.x].unit.type != FISHING_RAFT && map[c.y][c.x].unit.type != PIKEMAN)) { //levy means no upkeep on fish, peasants, and spears
+						if (!players[P_TURN].policies[BARRACKS] || (bType == FORT || bType == PIER)) { //barracks means forts and piers provide upkeep for unit on that tile
+							players[P_TURN].upkeep += units[map[c.y][c.x].unit.type - 1].cost * .05;
 						}
 					}
 				}
@@ -1192,7 +1128,7 @@ public:
 					if (bType == PIER) {
 						map[c.y][c.x].unit.HP++;
 						if (map[c.y][c.x].unit.gold > 0) { //ships drop off gold at pier
-							p.gold += map[c.y][c.x].unit.gold;
+							players[P_TURN].gold += map[c.y][c.x].unit.gold;
 							map[c.y][c.x].unit.gold = 0;
 						}
 					}
@@ -1200,7 +1136,7 @@ public:
 				else if (bType == FORT) { //Heal on Fort, also drop off gold
 					map[c.y][c.x].unit.HP += 5;
 					if (map[c.y][c.x].unit.gold > 0) {
-						p.gold += map[c.y][c.x].unit.gold;
+						players[P_TURN].gold += map[c.y][c.x].unit.gold;
 						map[c.y][c.x].unit.gold = 0;
 					}
 				}
@@ -1217,19 +1153,19 @@ public:
 				s += sendUnit(c.x, c.y);
 			}
 		}
-		p.units = unit_list;
+		players[P_TURN].units = unit_list;
 
 		if (s != "u") {
 			sendData(s);
 		}
 
-		p.max_pop = 6;
-		p.max_buildings = 12;
+		players[P_TURN].max_pop = 6;
+		players[P_TURN].max_buildings = 12;
 		s = "b";
-		for (int i = p.buildings.size() - 1; i >= 0; i--) {
+		for (int i = players[P_TURN].buildings.size() - 1; i >= 0; i--) {
 			delta = false;
-			C c = p.buildings[i];
-			if (map[c.y][c.x].owner == p.turn && map[c.y][c.x].building > 0) {
+			C c = players[P_TURN].buildings[i];
+			if (map[c.y][c.x].owner == players[P_TURN].turn && map[c.y][c.x].building > 0) {
 				bType = bIndex(map[c.y][c.x].building);
 				if (map[c.y][c.x].HP >= getBuildingHP(map[c.y][c.x].building, map[c.y][c.x].owner) / 2.0) {
 					//Buildings that provide max population space
@@ -1238,23 +1174,23 @@ public:
 						if (bType == HOUSE || bType == FORT) {
 							max_space = 3;
 						}
-						if (p.policies[HOUSING]) {
+						if (players[P_TURN].policies[HOUSING]) {
 							max_space *= 2;
 						}
-						p.max_pop += max_space;
+						players[P_TURN].max_pop += max_space;
 					}
 					else if (bType == OFFICE) { //office
-						p.max_buildings += 9;
+						players[P_TURN].max_buildings += 9;
 					}
 					else if (bType == WORKSHOP) { //workshop
-						p.gold++;
-						p.max_pop -= 2;
+						players[P_TURN].gold++;
+						players[P_TURN].max_pop -= 2;
 					}
 					else if (map[c.y][c.x].building >= 1 && map[c.y][c.x].building < 4) { //Farm
 						map[c.y][c.x].building++;
 						delta = true;
 					}
-					else if (map[c.y][c.x].building == 4 && map[c.y][c.x].unit.type > 0 && map[c.y][c.x].unit.owner == p.turn) { //Collect from farm
+					else if (map[c.y][c.x].building == 4 && map[c.y][c.x].unit.type > 0 && map[c.y][c.x].unit.owner == players[P_TURN].turn) { //Collect from farm
 						int farm_yield = 1;
 						map[c.y][c.x].building = 1;
 						for (int a = -1; a < 2; a++) {
@@ -1268,7 +1204,7 @@ public:
 							}
 						}
 						delta = true;
-						p.gold += farm_yield;
+						players[P_TURN].gold += farm_yield;
 					}
 				}
 				else { //building is on fire and may lose HP
@@ -1313,95 +1249,32 @@ public:
 		if (s != "b") {
 			sendData(s);
 		}
-		p.buildings = building_list;
-		if (p.buildings.size() > p.max_buildings) { //over building cap
-			p.upkeep += 1 + (p.buildings.size() - p.max_buildings) * .5;
+		players[P_TURN].buildings = building_list;
+		if (players[P_TURN].buildings.size() > players[P_TURN].max_buildings) { //over building cap
+			players[P_TURN].upkeep += 1 + (players[P_TURN].buildings.size() - players[P_TURN].max_buildings) * .5;
 		}
-		if (p.units.size() > p.max_pop) { //Over Population Cap
-			p.upkeep *= 1.5;
-			p.upkeep += 1;
+		if (players[P_TURN].units.size() > players[P_TURN].max_pop) { //Over Population Cap
+			players[P_TURN].upkeep *= 1.5;
+			players[P_TURN].upkeep += 1;
 		}
 		//Handle Player Debt and Upkeep
-		p.debt += p.upkeep;
-		p.gold -= (int)p.debt;
-		p.debt -= (int)p.debt;
-
-		for (int i = 0; i < MAPSIZE; i++) { //build the encyclopedia
-			for (int j = 0; j < MAPSIZE; j++) {
-				if (map[i][j].unit.type > 0 && map[i][j].unit.owner > 0) { //units
-					int found_index = -1;
-					for (int a = 0; a < encyclopedia.size(); a++) {
-						if (encyclopedia[a].turn == map[i][j].unit.owner) {
-							found_index = a;
-							a = encyclopedia.size();
-						}
-					}
-					if (found_index == -1) {
-						found_index = encyclopedia.size();
-						Entry e;
-						e.turn = map[i][j].unit.owner;
-						encyclopedia.push_back(e);
-					}
-					encyclopedia[found_index].unit_value += units[map[i][j].unit.type - 1].cost;
-				}
-				if (map[i][j].building > 0 && map[i][j].owner > 0) {
-					int found_index = -1;
-					for (int a = 0; a < encyclopedia.size(); a++) {
-						if (encyclopedia[a].turn == map[i][j].owner) {
-							found_index = a;
-							a = encyclopedia.size();
-						}
-					}
-					if (found_index == -1) {
-						found_index = encyclopedia.size();
-						Entry e;
-						e.turn = map[i][j].owner;
-						encyclopedia.push_back(e);
-					}
-					float income = .25;
-					if (bIndex(map[i][j].building) == FARM) { //farm
-						bool adj_river = false;
-						bool adj_mill = false;
-						for (int a = -1; a < 2; a++) {
-							for (int b = -1; b < 2; b++) {
-								if (a != 0 || b != 0) {
-									if (bIndex(map[safeC(a + i)][safeC(b + j)].building) == WINDMILL) {
-										adj_mill = true;
-									}
-									if (map[safeC(a + i)][safeC(b + j)].type == RIVER || map[safeC(a + i)][safeC(b + j)].type == LAKE) {
-										adj_river = true;
-									}
-								}
-							}
-						}
-						if (adj_river) {
-							income = 1/3.0;
-						}
-						if (adj_mill) {
-							income *= 2;
-						}
-					}
-					else if (bIndex(map[i][j].building) == WORKSHOP) { //workshop
-						income = 1;
-					}
-					encyclopedia[found_index].income += income;
-				}
-			}
-		}
+		players[P_TURN].debt += players[P_TURN].upkeep;
+		players[P_TURN].gold -= (int)players[P_TURN].debt;
+		players[P_TURN].debt -= (int)players[P_TURN].debt;
 	}
 
 	//Runs when the player ends their turn
 	void endTurn() {
 		// Claim Buildings, this is done at the end of the turn to prevent u from stepping on each building to claim it
 		std::string s = "b"; 
-		for (C c : p.units) {
+		for (C c : players[P_TURN].units) {
 			//Merchants can't claim buildings
 			if (map[c.y][c.x].unit.type != MERCHANT) {
 				//Some buildings can't be claimed
 				if (map[c.y][c.x].building > 0 && map[c.y][c.x].building != STAKES && map[c.y][c.x].building != DEPOT) {
-					if (map[c.y][c.x].owner != p.turn) {
-						map[c.y][c.x].owner = p.turn;
-						p.buildings.push_back(c);
+					if (map[c.y][c.x].owner != players[P_TURN].turn) {
+						map[c.y][c.x].owner = players[P_TURN].turn;
+						players[P_TURN].buildings.push_back(c);
 						s += sendBuilding(c.x, c.y);
 					}
 				}
@@ -1502,18 +1375,18 @@ public:
 	//Functions for unit movement and unit/building purchasing
 	bool canBuy(int x, int y, int index) {
 		int u_type = index + 1;
-		bool s = (!p.started);
-		if (bIndex(map[y][x].building) == FORT && map[y][x].owner != p.turn) { //can't build units on enemy forts
+		bool s = (!players[P_TURN].started);
+		if (bIndex(map[y][x].building) == FORT && map[y][x].owner != players[P_TURN].turn) { //can't build units on enemy forts
 			return false;
 		}
 		if (!s) {
-			if (p.policies[VOLUNTEERS] && map[y][x].owner == p.turn && (bIndex(map[y][x].building) == FORT || bIndex(map[y][x].building) == PIER)) {
+			if (players[P_TURN].policies[VOLUNTEERS] && map[y][x].owner == players[P_TURN].turn && (bIndex(map[y][x].building) == FORT || bIndex(map[y][x].building) == PIER)) {
 				s = true;
 			}
 			else {
 				for (int i = -1; i < 2; i++) {
 					for (int j = -1; j < 2; j++) {
-						if (map[safeC(y + i)][safeC(x + j)].unit.owner == p.turn) {
+						if (map[safeC(y + i)][safeC(x + j)].unit.owner == players[P_TURN].turn) {
 							if ((map[safeC(y + i)][safeC(x + j)].unit.type == COMMANDER || map[safeC(y + i)][safeC(x + j)].unit.type == MAYOR)) { //spawn next to mayor or commander
 								s = true;
 								i = 2; j = 2;
@@ -1544,9 +1417,9 @@ public:
 			return s && map[y][x].forest == NONE && map[y][x].elev != MOUNTAIN && map[y][x].unit.type == NO_UNIT;
 		}
 		if (units[index].naval) { //ships
-			return s && map[y][x].elev < FLAT && map[y][x].unit.type == NO_UNIT && p.gold >= units[index].cost;
+			return s && map[y][x].elev < FLAT && map[y][x].unit.type == NO_UNIT && players[P_TURN].gold >= units[index].cost;
 		}
-		return s && map[y][x].elev >= FLAT && map[y][x].forest == NONE && map[y][x].elev != MOUNTAIN && map[y][x].unit.type == NO_UNIT && p.gold >= units[index].cost;
+		return s && map[y][x].elev >= FLAT && map[y][x].forest == NONE && map[y][x].elev != MOUNTAIN && map[y][x].unit.type == NO_UNIT && players[P_TURN].gold >= units[index].cost;
 	}
 
 	/*int checkBridge(Spot c) {
@@ -1576,7 +1449,7 @@ public:
 		int cost = buildings[index].cost;
 		for (int i = -1; i < 2; i++) {
 			for (int j = -1; j < 2; j++) {
-				if ((map[safeC(y + i)][safeC(x + j)].unit.type == PEASANT || map[safeC(y + i)][safeC(x + j)].unit.type == MAYOR) && map[safeC(y + i)][safeC(x + j)].unit.owner == p.turn) {
+				if ((map[safeC(y + i)][safeC(x + j)].unit.type == PEASANT || map[safeC(y + i)][safeC(x + j)].unit.type == MAYOR) && map[safeC(y + i)][safeC(x + j)].unit.owner == players[P_TURN].turn) {
 					s = true;
 					i = 2; j = 2;
 				}
@@ -1631,15 +1504,15 @@ public:
 				return false;
 			}
 		}
-		s = s && (map[y][x].building == 0 || (GetKey(olc::Key::SHIFT).bHeld && map[y][x].owner == p.turn));
+		s = s && (map[y][x].building == 0 || (GetKey(olc::Key::SHIFT).bHeld && map[y][x].owner == players[P_TURN].turn));
 		s = s && (map[y][x].elev >= FLAT || ((index == BRIDGE || index == PIER) && map[y][x].elev < FLAT));
 		if (map[y][x].forest > FISH) {
-			if (!p.policies[LOGGING]) {
+			if (!players[P_TURN].policies[LOGGING]) {
 				cost += 2;
 			}
 			s = s && GetKey(olc::Key::SHIFT).bHeld;
 		}
-		return s && map[y][x].elev != MOUNTAIN && p.gold >= cost;
+		return s && map[y][x].elev != MOUNTAIN && players[P_TURN].gold >= cost;
 	}
 
 	//Terrain movement cost
@@ -1803,7 +1676,7 @@ public:
 			//Gold
 			Draw(icons, 2, 2, 0, 0, 43, 15, scale);
 			Draw(icons, 2 + 2 * scale, 2 + 2 * scale, 80, 32, 11, 11, scale);
-			Print(to_str(p.gold), 2 + 27*scale, 2 + 8*scale, true, scale);
+			Print(to_str(players[P_TURN].gold), 2 + 27*scale, 2 + 8*scale, true, scale);
 			
 			std::string col = "*WHITE*";
 
@@ -1811,34 +1684,34 @@ public:
 			Draw(icons, 4 + 43*scale, 2, 0, 16, 43, 15, scale); //bg thing
 
 			Draw(icons, 4 + 45*scale, 2+2*scale, 96, 16, 11, 11, scale); //unit
-			Draw(icons, 4 + 49*scale, 2+6*scale, 112, 0, 11, 11, scale, colors[p.turn]); //unit color
+			Draw(icons, 4 + 49*scale, 2+6*scale, 112, 0, 11, 11, scale, colors[players[P_TURN].turn]); //unit color
 
-			if (p.units.size() > p.max_pop) {
+			if (players[P_TURN].units.size() > players[P_TURN].max_pop) {
 				col = "*RED*";
 			}
-			else if (p.units.size() == p.max_pop) {
+			else if (players[P_TURN].units.size() == players[P_TURN].max_pop) {
 				col = "*ORANGE*";
 			}
-			Print(col + to_str(p.units.size()) + col, 2 + 64*scale, 2 + 8*scale, true, scale); //Pop
-			Print(to_str(p.max_pop), 4 + 78 * scale, 2 + 8 * scale, true, scale); //Max Pop
+			Print(col + to_str(players[P_TURN].units.size()) + col, 2 + 64*scale, 2 + 8*scale, true, scale); //Pop
+			Print(to_str(players[P_TURN].max_pop), 4 + 78 * scale, 2 + 8 * scale, true, scale); //Max Pop
 
 			//Buildings vs Max Buildings
 			Draw(icons, 4 + 86 * scale, 2, 0, 16, 43, 15, scale); //bg thing
 			Draw(icons, 4 + 88 * scale, 2 + 2 * scale, 80, 16, 11, 11, scale); //unit
 			col = "*WHITE*";
-			if (p.buildings.size() > p.max_buildings) {
+			if (players[P_TURN].buildings.size() > players[P_TURN].max_buildings) {
 				col = "*RED*";
 			}
-			else if (p.buildings.size() == p.max_buildings) {
+			else if (players[P_TURN].buildings.size() == players[P_TURN].max_buildings) {
 				col = "*ORANGE*";
 			}
-			Print(col + to_str(p.buildings.size()) + col, 2 + 107 * scale, 2 + 8 * scale, true, scale); //Pop
-			Print(to_str(p.max_buildings), 4 + 121 * scale, 2 + 8 * scale, true, scale); //Max Pop
+			Print(col + to_str(players[P_TURN].buildings.size()) + col, 2 + 107 * scale, 2 + 8 * scale, true, scale); //Pop
+			Print(to_str(players[P_TURN].max_buildings), 4 + 121 * scale, 2 + 8 * scale, true, scale); //Max Pop
 
 			//Unit Upkeep
 			Draw(icons, 8 + 129*scale, 2, 0, 0, 43, 15, scale);
 			Draw(icons, 8 + 131 * scale, 2 + 2 * scale, 112, 32, 11, 11, scale);
-			int upkeep_display = p.upkeep * 100;
+			int upkeep_display = players[P_TURN].upkeep * 100;
 			Print(to_str(upkeep_display/100.0), 8 + 157 * scale, 2 + 8 * scale, true, scale);
 
 			//Buying Building
@@ -1847,17 +1720,17 @@ public:
 			//Buying Unit
 			Draw(icons, ScreenWidth() - (2 + 31 * scale), 2, 80 + unit_UI * 16, 0, 15, 15, scale);
 			Draw(icons, ScreenWidth() - (2 + 31 * scale) + 2 * scale, 2 + 2 * scale, 96, 16, 11, 11, scale);
-			Draw(icons, ScreenWidth() - (2 + 31 * scale) + 2 * scale, 2 + 2 * scale, 2, 34, 11, 11, scale, colors[p.turn]); //Player colors 2 34
+			Draw(icons, ScreenWidth() - (2 + 31 * scale) + 2 * scale, 2 + 2 * scale, 2, 34, 11, 11, scale, colors[players[P_TURN].turn]); //Player colors 2 34
 			
 			//Player Turn and Current Turn
 			Draw(icons, ScreenWidth()-(2+16*2), ScreenHeight()-(2+16*2), 0, 80, 16, 16, 2, colors[turn]);
-			if (turn == p.turn) {
+			if (turn == players[P_TURN].turn) {
 				olc::Pixel drawColor = olc::WHITE;
-				for (int i = 0; i < p.units.size(); i++) {
-					C c = p.units[i];
+				for (int i = 0; i < players[P_TURN].units.size(); i++) {
+					C c = players[P_TURN].units[i];
 					if (map[c.y][c.x].unit.MP > 0) {
 						drawColor = olc::Pixel(120, 120, 120);
-						i = p.units.size();
+						i = players[P_TURN].units.size();
 					}
 				}
 				Draw(icons, ScreenWidth() - (2 + 16 * 2), ScreenHeight() - (2 + 16 * 2), 16, 80, 16, 16, 2, drawColor);
@@ -1871,7 +1744,7 @@ public:
 			}
 			Draw(icons, crown.x, crown.y, 80, 66, 11, 10, scale);
 			int cost = 16;
-			if (map[tH.y][tH.x].unit.owner == p.turn && map[tH.y][tH.x].unit.type > 0) {
+			if (map[tH.y][tH.x].unit.owner == players[P_TURN].turn && map[tH.y][tH.x].unit.type > 0) {
 				cost = 16 - units[map[tH.y][tH.x].unit.type - 1].cost;
 			}
 			dX = 9 * scale + ScreenWidth() - (2 + 17 * scale);
@@ -1889,27 +1762,6 @@ public:
 					heal.y = (4 + (24 + 17) * scale);
 				}
 			}
-
-			if (draw_encyclopedia) {
-				dX = ScreenWidth() / 2 - 20 * scale;
-				dY = ScreenHeight()/2 - ((14 + 2 + (8 * encyclopedia.size())) * scale)/2;
-				//Draw the top
-				Draw(icons, dX, dY, 144, 0, 41, 14, scale);
-				dY += 14 * scale;
-				for (Entry e : encyclopedia) {
-					//Draw mid section
-					Draw(icons, dX, dY, 144, 15, 41, 8, scale);
-					//Draw player color
-					Draw(icons, dX+3*scale, dY, 128, 3, 7, 7, scale, colors[e.turn]);
-					Draw(icons, ScreenWidth() - 22, ScreenHeight() - 40, 32, 32, 10, 10, 2, colors[turn]);
-					//Print income and unit value
-					Print(to_str((int)std::roundf(e.income)), dX + 17 * scale, dY + 4 * scale , true, scale);
-					Print(to_str(e.unit_value), dX + 33 * scale, dY + 4 * scale , true, scale);
-					dY += 8 * scale;
-				}
-				//Draw the bottom
-				Draw(icons, dX, dY, 144, 24, 41, 2, scale);
-			}
 			if (unit_UI) { //Unit Purchasing
 				dX = 2;
 				dY = 4 + 15 * scale;
@@ -1926,19 +1778,19 @@ public:
 					UI_Unit u = units[i];
 					//Draw a unit on the buying unit UI list
 					Draw(armySprites, dX + 2 * scale, dY + scale, u.sX, u.sY, 16, 17, scale); //Draw Unit
-					Draw(armySprites, dX + 2 * scale, dY + 2*scale, u.sX, 17 + u.sY, 16, 14, scale, colors[p.turn]); //Draw Unit's colors
+					Draw(armySprites, dX + 2 * scale, dY + 2*scale, u.sX, 17 + u.sY, 16, 14, scale, colors[players[P_TURN].turn]); //Draw Unit's colors
 					//Print Cost
 					Print(to_str(u.cost), dX + 35 * scale, dY + 6 * scale, true, scale);
 					//HP
-					Print(to_str(getMaxHP(i+1, p.turn)), dX + 35 * scale, dY + 14 * scale, true, scale);
+					Print(to_str(getMaxHP(i+1, players[P_TURN].turn)), dX + 35 * scale, dY + 14 * scale, true, scale);
 					//ATK
-					Print(to_str(getATK(i+1, p.turn)), dX + 53 * scale, dY + 2 * scale, false, scale);
+					Print(to_str(getATK(i+1, players[P_TURN].turn)), dX + 53 * scale, dY + 2 * scale, false, scale);
 					//DEF
 					Print(to_str(u.DEF), dX + 53 * scale, dY + 10 * scale, false, scale);
 					//RANGE
 					Print(to_str(u.range), dX + 70 * scale, dY + 2 * scale, false, scale);
 					//MP
-					Print(to_str(getMaxMP(i+1, p.turn)), dX + 70 * scale, dY + 10 * scale, false, scale);
+					Print(to_str(getMaxMP(i+1, players[P_TURN].turn)), dX + 70 * scale, dY + 10 * scale, false, scale);
 					if (i == unit_selected) {
 						selected_dY = dY;
 					}
@@ -1968,10 +1820,10 @@ public:
 				for (int i = 0; i < buildings.size(); i++) {
 					Draw(building_sprites, dX, dY, sX, sY, sW, sH, scale);
 					if (i == 0) {
-						DrawBuilding(4, dX+scale, dY - 8 * scale, scale, 99, C(0, 0), p.turn);
+						DrawBuilding(4, dX+scale, dY - 8 * scale, scale, 99, C(0, 0), players[P_TURN].turn);
 					}
 					else {
-						DrawBuilding(buildings[i].type, dX+scale, dY - 8 * scale, scale, 99, C(0, 0), p.turn);
+						DrawBuilding(buildings[i].type, dX+scale, dY - 8 * scale, scale, 99, C(0, 0), players[P_TURN].turn);
 					}
 
 					Print(to_str(buildings[i].cost), dX+11*scale, dY+24*scale, false, scale);
@@ -2047,8 +1899,6 @@ public:
 	void rDraw(olc::Decal* d, float angle, int x, int y, int sX, int sY, int sizeX, int sizeY, float scale = 1, olc::Pixel ape = olc::WHITE) {
 		DrawPartialRotatedDecal(olc::vf2d(x, y), d, angle, olc::vf2d(sizeX / 2, sizeY / 2), olc::vf2d(sX, sY), olc::vf2d(sizeX, sizeY), olc::vf2d(scale, scale), ape);
 	}
-
-	//Look up "hammie one hour" when you feel sad (1)
 
 	float latTemp(int x) {
 		//return 100 - square((float)(x - MAPSIZE / 2.0) / (MAPSIZE / 20.0));
@@ -2154,7 +2004,7 @@ public:
 			}
 			//Draw a unit being purchased
 			Draw(armySprites, dX, dY - zoom, units[unit_selected].sX, units[unit_selected].sY, 16, 17, z, pix);
-			Draw(armySprites, dX, dY - (zoom-z), units[unit_selected].sX, 17 + units[unit_selected].sY, 16, 14, z, colors[p.turn]);
+			Draw(armySprites, dX, dY - (zoom-z), units[unit_selected].sX, 17 + units[unit_selected].sY, 16, 14, z, colors[players[P_TURN].turn]);
 		}
 		else if (buying_building) {
 			sY = 16;
@@ -2166,10 +2016,10 @@ public:
 				pix.a = 200;
 				ap.a = 200;
 			}
-			DrawBuilding(buildings[building_selected].type, dX, dY-zoom, z, 99, C(15, 15), p.turn, pix);
+			DrawBuilding(buildings[building_selected].type, dX, dY-zoom, z, 99, C(15, 15), players[P_TURN].turn, pix);
 		}
 		if (attacking_unit) {
-			if (map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.owner == p.turn && map[tS.y][tS.x].unit.MP > 0) {
+			if (map[tS.y][tS.x].unit.type > 0 && map[tS.y][tS.x].unit.owner == players[P_TURN].turn && map[tS.y][tS.x].unit.MP > 0) {
 				int w = ceil(float(ScreenWidth()) / float(zoom));
 				int h = ceil(float(ScreenHeight()) / float(zoom));
 				int hX = GetMouseX();
@@ -2450,54 +2300,36 @@ public:
 			}
 		}
 		else {
-			olc::Pixel p(255, 255, 255);
+			olc::Pixel color(255, 255, 255);
 			switch (map[y][x].type) {
-			case OCEAN: p = Water; break;
-			case RIVER: p = River; break;
-			case LAKE: p = Lake; break;
-			case GRASS: p = Grass; break;
-			case STEPPE: p = Steppe; break;
-			case SAVANNA: p = Savanna; break;
-			case COLD_DESERT: p = Cold_Desert; break;
-			case DESERT: p = Desert; break;
-			case TUNDRA: p = Tundra; break;
-			case ICE: p = Ice; break;
-			case BOG: p = Bog; break;
-			case MEADOW: p = Meadow; break;
-			case SHALLOW: p = Ocean; break;
+			case OCEAN: color = Water; break;
+			case RIVER: color = River; break;
+			case LAKE: color = Lake; break;
+			case GRASS: color = Grass; break;
+			case STEPPE: color = Steppe; break;
+			case SAVANNA: color = Savanna; break;
+			case COLD_DESERT: color = Cold_Desert; break;
+			case DESERT: color = Desert; break;
+			case TUNDRA: color = Tundra; break;
+			case ICE: color = Ice; break;
+			case BOG: color = Bog; break;
+			case MEADOW: color = Meadow; break;
+			case SHALLOW: color = Ocean; break;
 			}
 			if (map[y][x].forest != NONE) {
-				p = Forest;
+				color = Forest;
 			}
 			else if (map[y][x].elev == HILL) {
-				p = Hill;
+				color = Hill;
 			}
 			else if (map[y][x].elev == MOUNTAIN) {
-				p = Mountain;
+				color = Mountain;
 			}
-			/*if (drawCurrentDirection) {
-				if (map[y][x].elev == FLAT) {
-					int intens = 255;// std::min(255, map[y][x].num / 35);
-					switch (map[y][x].prevailing) {
-					case -1: break;
-					case 0: p = olc::Pixel(255, 165, 0, intens);  break; //d -> orange
-					case 1: p = olc::Pixel(255, 0, 0, intens); break; //r -> red
-					case 2: p = olc::Pixel(120, 255, 200, intens);  break; //u -> teal
-					case 3: p = olc::Pixel(0, 255, 0, intens);  break; //l -> green
-					}
-					intens = map[y][x].forest_C;
-					if (intens > 255) {
-						intens = 255;
-					}
-					p = olc::Pixel(0, 255, 0, intens);
-				}
-			}
-			//p = olc::Pixel(0, 0, 255, map[y][x].temp * 2.55);*/
-			FillRect(olc::vf2d(dX, dY), olc::vf2d(zom, zom), p);
+			FillRect(olc::vf2d(dX, dY), olc::vf2d(zom, zom), color);
 			if (map[y][x].owner != 0) {
-				olc::Pixel p = colors[map[y][x].owner];
-				p.a = 75;
-				FillRect(olc::vf2d(dX, dY), olc::vf2d(zom, zom), p);
+				olc::Pixel color = colors[map[y][x].owner];
+				color.a = 75;
+				FillRect(olc::vf2d(dX, dY), olc::vf2d(zom, zom), color);
 			}
 		}
 	}
@@ -2524,7 +2356,7 @@ public:
 
 	int Print(std::string text, int x = -1, int y = -1, bool center = false, float scale = 1.0f, int width = 1920/2) {
 		int cap = width;
-		olc::Pixel p = WHITE;
+		olc::Pixel pix = WHITE;
 		if (y == -1) {
 			cap = x;
 		}
@@ -2588,11 +2420,11 @@ public:
 			if (c == '*') {
 				skipping = !skipping;
 				if (!skipping) {
-					if (GetColor(color, timer) != p) {
-						p = GetColor(color, timer);
+					if (GetColor(color, timer) != pix) {
+						pix = GetColor(color, timer);
 					}
 					else {
-						p = WHITE;
+						pix = WHITE;
 					}
 					color = "";
 				}
@@ -2644,7 +2476,7 @@ public:
 					}
 				}
 				if (prnt) {
-					DrawPartialDecal(olc::vf2d(drawX + offX * scale, drawY + offY * scale), olc::vf2d(sW * scale, sH * scale), font, olc::vf2d(sX, sY), olc::vf2d(sW, sH), p);
+					DrawPartialDecal(olc::vf2d(drawX + offX * scale, drawY + offY * scale), olc::vf2d(sW * scale, sH * scale), font, olc::vf2d(sX, sY), olc::vf2d(sW, sH), pix);
 				}
 				if (c != '\n') {
 					drawX += scale * (sW + offX + 1);
@@ -2701,9 +2533,9 @@ public:
 	}
 
 	std::string sendPolicies() {
-		std::string s = "p";
+		std::string s = "players[P_TURN]";
 		for (int i = 0; i < NUM_POLICIES; i++) {
-			s += '0' + p.policies[i];
+			s += '0' + players[P_TURN].policies[i];
 		}
 		return s;
 	}
@@ -2858,12 +2690,12 @@ public:
 				char context = msg[1] - '0';
 				char sender = msg[2] - '0';
 				static int num = 0;
-				bool getMessage = (sender == 0) || (context == 0 && sender == p.turn) || (context == 1 && sender != p.turn);
+				bool getMessage = (sender == 0) || (context == 0 && sender == players[P_TURN].turn) || (context == 1 && sender != players[P_TURN].turn);
 
-				if (p.turn == 0) {
+				if (players[P_TURN].turn == 0) {
 					if (c == 't') { //Assign Player Turn
 						std::cout << "My turn is now " << '0' + sender << std::endl;
-						p.turn = sender;
+						players[P_TURN].turn = sender;
 					}
 					num++;
 				}
@@ -2888,7 +2720,6 @@ public:
 						}
 						if (map.size() == 0) {
 							map.resize(MAPSIZE);
-							MODI = std::max(.4, (MAPSIZE) / (1000.0));
 						}
 						else {
 							verify_map = true;
@@ -2905,23 +2736,23 @@ public:
 					}
 					else if (c == 'e') { //Set Turn
 						turn = std::stoi(msg);
-						if (turn == p.turn && drawMap) {
+						if (turn == players[P_TURN].turn && drawMap) {
 							startTurn();
 							playSound(CHIMES);
 						}
 					}
 					else if (c == 'p') { //policies
-						int p_turn = sender;
-						while (players.size() < p_turn) {
+						int rTurn = sender;
+						while (players.size() < rTurn) {
 							players.push_back(Player());
 						}
 						std::cout << "Received msg: " << msg << std::endl;
 						for (int i = 0; i < min(NUM_POLICIES, msg.length()); i++) {
-							players[p_turn].policies[i] = (msg[i] - '0');
+							players[rTurn].policies[i] = (msg[i] - '0');
 						}
 					}
 					else if (c == 'G') { //Set Gold
-						p.gold = std::stoi(msg);
+						players[P_TURN].gold = std::stoi(msg);
 					}
 				}
 				ZeroMemory(buf, 600);
@@ -2940,6 +2771,10 @@ public:
 
 int main() {
 	//ShowWindow(GetConsoleWindow(), SW_HIDE);
+	std::cout << "Enter an IP: ";
+	std::cin >> IP;
+	std::cout << "Enter a Port : ";
+	std::cin >> port;
 	Terrain generator;
 	if (generator.Construct(1920 / 2, 1080 / 2, 1, 1, true, true)) {
 		generator.Start();
